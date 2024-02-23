@@ -78,7 +78,7 @@ workflow {
                 row.group,
                 row.sample_id,
                 file(row.bam),
-                //file(row.?bam_index ?: "${row.bam}.bai")
+                file(row.?bam_index ?: "${row.bam}.bai")
             )
         ) // group, sample, bam, bam_index
         | combine(chroms) // group, sample, bam, bam_index, chrom
@@ -86,5 +86,5 @@ workflow {
         | set_key_for_group_tuple
         | split_by_chr
         | groupTuple([0, 1])
-        | merge_bams
+        //| merge_bams
 }
