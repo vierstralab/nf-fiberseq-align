@@ -30,40 +30,40 @@ process split_by_chr {
     """
 }
 
-// process merge_bams {
-//     label "high_resource"
-//     conda "${params.conda}"
-//     tag "${group_key}"
-//     publishDir "${params.outdir}/merged/${groups[0]}"
+process merge_bams {
+    label "high_resource"
+    conda "${params.conda}"
+    tag "${group_key}"
+    publishDir "${params.outdir}/merged/${groups[0]}"
 
-//     input:
-//         tuple val(group_key), val(groups), path(bam_files)
+    input:
+        tuple val(group_key), val(groups), path(bam_files)
     
-//     output:
-//         tuple val(group_key), path(name), path("${name}.bai")
+    output:
+        tuple val(group_key), path(name), path("${name}.bai")
     
-//     script:
-//     name = "${group_key}.aligned.bam"
-//     if bam_files.size() == 1:
-//         """
-//         ln -s ${bam_files[0]} ${name}
-//         samtools index \
-//             -@ ${task.cpus} \
-//             ${name}
-//         """
-//     else:
-//         """
-//         samtools merge \
-//             -@ ${task.cpus} \
-//             -o ${name} \
-//             ${bam_files}
+    script:
+    name = "${group_key}.aligned.bam"
+    if bam_files.size() == 1:
+        """
+        ln -s ${bam_files[0]} ${name}
+        samtools index \
+            -@ ${task.cpus} \
+            ${name}
+        """
+    else:
+        """
+        samtools merge \
+            -@ ${task.cpus} \
+            -o ${name} \
+            ${bam_files}
 
-//         samtools index \
-//             -@ ${task.cpus} \
-//             ${name}
-//         """
+        samtools index \
+            -@ ${task.cpus} \
+            ${name}
+        """
 
-// }
+}
 
 
 workflow {
