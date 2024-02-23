@@ -132,8 +132,11 @@ workflow {
             no_5mc: true
         }
     data.no_5mc
+        | map(it -> tuple(it[0], it[1]))
         | call_5mc
-        | mix(data.with_5mc)
+        | mix(
+            data.with_5mc | map(it -> tuple(it[0], it[1]))
+        )
         | call_m6a
         | align_bam
         | extract_signal
