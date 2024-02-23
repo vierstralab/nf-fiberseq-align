@@ -73,19 +73,21 @@ workflow {
         | map(row -> row[0])
         | view()
 
-    // Channel.fromPath(params.samples_file)
-    //     | splitCsv(header: true, sep: "\t")
-    //     | map(row -> tuple(
-    //             row.group,
-    //             row.sample_id,
-    //             file(row.bam),
-    //             file(row.?bam_index ?: "${row.bam}.bai")
-    //     )) // group, sample, bam, bam_index
+
+    Channel.fromPath(params.samples_file)
+        | splitCsv(header: true, sep: "\t")
+        | map(row -> tuple(
+            row.group,
+            row.sample_id,
+            file(row.bam),
+            file(row.bam_index ?: "${row.bam}.bai")
+        )) // group, sample, bam, bam_index
+        | view()
     //     | combine(chroms) // group, sample, bam, bam_index, chrom
     //     | view()
         //| map(it -> tuple("${it[0]}.${it[4]}", *it)) // new_id, group, sample, bam, bam_index, chrom
         //| set_key_for_group_tuple
         //| split_by_chr
-        | groupTuple()
+        //| groupTuple()
         //| merge_bams
 }
