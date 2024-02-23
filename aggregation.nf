@@ -44,14 +44,14 @@ process merge_bams {
     
     script:
     name = "${group_key}.aligned.bam"
-    if bam_files.size() == 1:
+    if (bam_files.size() == 1) {
         """
         ln -s ${bam_files[0]} ${name}
         samtools index \
             -@ ${task.cpus} \
             ${name}
         """
-    else:
+    } else {
         """
         samtools merge \
             -@ ${task.cpus} \
@@ -62,6 +62,7 @@ process merge_bams {
             -@ ${task.cpus} \
             ${name}
         """
+    }
 
 }
 
