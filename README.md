@@ -7,5 +7,7 @@ Align each flow cell separately + extract signal
 Merge individual alignments according to group column and divide them by chromosome
 
 
-## installation notes. fibertools cannot be adequately installed with conda. Use cargo install --all-features --git https://github.com/fiberseq/fibertools-rs
+## installation notes. 
+fibertools cannot be adequately installed with conda.
+Use cargo install --all-features --git https://github.com/fiberseq/fibertools-rs
 
