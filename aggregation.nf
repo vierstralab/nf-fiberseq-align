@@ -79,12 +79,11 @@ workflow {
                 row.sample_id,
                 file(row.bam),
                 file(row.?bam_index ?: "${row.bam}.bai")
-            )
-        ) // group, sample, bam, bam_index
+        )) // group, sample, bam, bam_index
         | combine(chroms) // group, sample, bam, bam_index, chrom
         | map(it -> tuple("${it[0]}.${it[4]}", *it)) // new_id, group, sample, bam, bam_index, chrom
-        | set_key_for_group_tuple
+        //| set_key_for_group_tuple
         | split_by_chr
-        | groupTuple([0, 1])
+        | groupTuple()
         //| merge_bams
 }
