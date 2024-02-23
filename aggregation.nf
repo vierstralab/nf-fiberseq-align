@@ -71,6 +71,7 @@ workflow {
     chroms = Channel.fromPath(params.chrom_sizes)
         | splitCsv(header: false, sep: "\t")
         | map(row -> row[0])
+        | filter( ~/chr[XY0-9]+\s/ )
 
     Channel.fromPath(params.samples_file)
         | splitCsv(header: true, sep: "\t")
@@ -81,8 +82,8 @@ workflow {
             file(row.bam_index ?: "${row.bam}.bai")
         )) // group, sample, bam, bam_index
         | combine(chroms) // group, sample, bam, bam_index, chrom
+        | map(it -> tuple("${it[0]}.${it[4]}", *it)) // new_id, group, sample, bam, bam_index, chrom
         | view()
-        //| map(it -> tuple("${it[0]}.${it[4]}", *it)) // new_id, group, sample, bam, bam_index, chrom
         //| set_key_for_group_tuple
         //| split_by_chr
         //| groupTuple()
