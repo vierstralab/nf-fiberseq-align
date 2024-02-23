@@ -25,9 +25,8 @@ process split_by_chr {
     samtools view \
         -@ ${task.cpus} \
         -b \
-        -o ${name} \
         ${bam_file} \
-        ${chrom}
+        ${chrom} > ${name}
     """
 }
 
