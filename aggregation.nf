@@ -85,7 +85,6 @@ workflow {
         | map(it -> tuple("${it[0]}.${it[4]}", *it)) // new_id, group, sample, bam, bam_index, chrom
         | set_key_for_group_tuple
         | split_by_chr
-        | view()
-        //| groupTuple()
-        //| merge_bams
+        | groupTuple()
+        | merge_bams
 }
