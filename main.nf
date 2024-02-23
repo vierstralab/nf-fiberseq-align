@@ -126,7 +126,7 @@ process to_ucsc_format {
 workflow {
     data = Channel.fromPath(params.samples_file)
         | splitCsv(header: true, sep: "\t")
-        | map(row -> tuple(row.prefix, row.reads, row.sequencer_type))
+        | map(row -> tuple(row.sample_id, file(row.reads), row.sequencer_type))
         | branch {
             with_5mc: it[2] == "Revio"
             no_5mc: true
@@ -142,7 +142,7 @@ workflow {
 workflow extractSignal {
     Channel.fromPath(params.samples_file)
         | splitCsv(header: true, sep: "\t")
-        | map(row -> tuple(row.prefix, row.bam, row.bam_index))
+        | map(row -> tuple(row.sample_id, file(row.bam), file(row.bam_index)))
         | extract_signal
         | to_ucsc_format
 }

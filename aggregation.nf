@@ -71,7 +71,7 @@ workflow {
         | splitCsv(header: true, sep: "\t")
         | map(row -> tuple(
                 row.group,
-                row.prefix,
+                row.sample_id,
                 file(row.bam),
                 file(row.bam_index)
             )
