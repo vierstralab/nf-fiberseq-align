@@ -25,7 +25,7 @@ process call_5mc {
 process call_m6a {
     label "high_resource"
     tag "${prefix}"
-    conda "${params.conda}"
+    module "fibertools-rs/0.3.2"
     publishDir "${params.outdir}/predicted_m6a"
 
     input:
