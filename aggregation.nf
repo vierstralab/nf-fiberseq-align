@@ -71,7 +71,7 @@ workflow {
     chroms = Channel.fromPath(params.chrom_sizes)
         | splitCsv(header: false, sep: "\t")
         | map(row -> row[0])
-        | filter( ~/chr[XY0-9]+\s/ )
+        | filter( ~/^chr[XY0-9]+\t/ )
 
     Channel.fromPath(params.samples_file)
         | splitCsv(header: true, sep: "\t")
