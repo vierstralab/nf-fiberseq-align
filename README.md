@@ -9,5 +9,8 @@ Merge individual alignments according to group column and divide them by chromos
 
 ## installation notes. 
 fibertools cannot be adequately installed with conda.
-Use cargo install --all-features --git https://github.com/fiberseq/fibertools-rs
+Use:
+1) Install Rust
+2) `source "$HOME/.cargo/env"`
+3) `cargo install --all-features --git https://github.com/fiberseq/fibertools-rs`
 
