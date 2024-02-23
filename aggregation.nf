@@ -2,16 +2,22 @@
 
 params.conda = "$moduleDir/environment.yml"
 
+def set_key_for_group_tuple(ch) {
+  ch.groupTuple()
+    | map{ it -> tuple(groupKey(it[0], it[1].size()), *it[1..(it.size()-1)]) }
+    | transpose()
+}
+
 process split_by_chr {
     label "high_resource"
     conda "${params.conda}"
     tag "${prefix}:${chrom}"
 
     input:
-        tuple val(group), val(prefix), path(bam_file), path(bam_file_index), val(chrom)
+        tuple val(group_key), val(group), val(prefix), path(bam_file), path(bam_file_index), val(chrom)
     
     output:
-        tuple val(group), val(chrom), path(name)
+        tuple val(group_key), val(group), path(name)
 
     script:
     name = "${prefix}.aligned.${chrom}.bam"
@@ -28,17 +34,17 @@ process split_by_chr {
 process merge_bams {
     label "high_resource"
     conda "${params.conda}"
-    tag "${group}:${chrom}"
-    publishDir "${params.outdir}/merged/${group}"
+    tag "${group_key}"
+    publishDir "${params.outdir}/merged/${groups[0]}"
 
     input:
-        tuple val(group), val(chrom), path(bam_files)
+        tuple val(group_key), val(groups), path(bam_files)
     
     output:
-        tuple val(group), val(chrom), path(name), path("${name}.bai")
+        tuple val(group_key), path(name), path("${name}.bai")
     
     script:
-    name = "${group}.${chrom}.aligned.bam"
+    name = "${group_key}.aligned.bam"
     if bam_files.size() == 1: {
         """
         ln -s ${bam_files[0]} ${name}
@@ -75,8 +81,10 @@ workflow {
                 file(row.bam),
                 file(row.bam_index)
             )
-        )
-        | combine(chroms)
+        ) // group, sample, bam, bam_index
+        | combine(chroms) // group, sample, bam, bam_index, chrom
+        | map(it -> tuple("${it[0]}.${it[4]}", *it)) // new_id, group, sample, bam, bam_index, chrom
+        | set_key_for_group_tuple
         | split_by_chr
         | groupTuple([0, 1])
         | merge_bams
