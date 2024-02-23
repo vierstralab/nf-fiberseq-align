@@ -79,7 +79,7 @@ workflow {
                 row.group,
                 row.sample_id,
                 file(row.bam),
-                file(row.bam_index)
+                file(row.?bam_index ?: "${row.bam}.bai")
             )
         ) // group, sample, bam, bam_index
         | combine(chroms) // group, sample, bam, bam_index, chrom
