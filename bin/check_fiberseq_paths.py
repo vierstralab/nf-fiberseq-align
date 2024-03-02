@@ -57,10 +57,18 @@ def check_bam_files(row):
             well_id = check_wells(base_path, well_id, fname)
         except ValueError as e:
             if barcode is None:
-                print('hifi reads not found')
+                print(f'hifi reads not found for {base_path}. Trying subreads.')
                 fname = "*.subreads.bam"
-                well_id = check_wells(base_path, well_id, fname)
-                reads_type = 'subreads'
+                try: 
+                    well_id = check_wells(base_path, well_id, fname)
+                    reads_type = 'subreads'
+                except ValueError as e:
+                    print(f'subreads not found for {base_path}. well_id: {well_id}. Setting reads to None.')
+                    row['reads'] = None
+                    row['reads_size'] = None
+                    row['sample_id'] = None
+                    row['reads_type'] = None
+                    return row
             else:
                 raise e
     else:
@@ -71,27 +79,18 @@ def check_bam_files(row):
     # Find all bam files matching the pattern
     files = glob.glob(f"{base_path}/{well_id}/{fname}")
     row['Well ID fixed'] = well_id
-    try:
-        assert len(files) == 1, f"Expected 1 bam file, found {len(files)}: {files}. base_path: {base_path}, well_id: {well_id}, fname: {fname}"
-        result = files[0]
-        tmp = os.path.basename(result).split('.')
-        expected_len = 3 if barcode is None else 4
-        assert len(tmp) == expected_len, f"Expected {expected_len} parts in the filename, found {len(tmp)}: {tmp}"
-        row['reads'] = result
-        row['reads_size'] = sizeof_fmt(result)
-        row['sample_id'] = tmp[0]
-        row['reads_type'] = reads_type
+
+    assert len(files) == 1, f"Expected 1 bam file, found {len(files)}: {files}. base_path: {base_path}, well_id: {well_id}, fname: {fname}"
+    result = files[0]
+    tmp = os.path.basename(result).split('.')
+    expected_len = 3 if barcode is None else 4
+    assert len(tmp) == expected_len, f"Expected {expected_len} parts in the filename, found {len(tmp)}: {tmp}"
+    row['reads'] = result
+    row['reads_size'] = sizeof_fmt(result)
+    row['sample_id'] = tmp[0]
+    row['reads_type'] = reads_type
         
-        return row
-    except AssertionError as e:
-        if len(files) == 0:
-            print(f"No bam files found for {base_path}/{well_id}/{fname}")
-            row['reads'] = None
-            row['reads_size'] = None
-            row['sample_id'] = None
-            row['reads_type'] = None
-            return row
-        raise e
+    return row
 
 
 if __name__ == '__main__':
