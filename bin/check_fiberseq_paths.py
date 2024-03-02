@@ -45,15 +45,19 @@ def check_bam_files(row):
         if barcode is not None:
             barcode = f"{barcode}--{barcode}"
             fname = f'{barcode}/*.hifi_reads.{barcode}.bam'
+            reads_type = 'hifi'
         else:
             fname = "'*.subreads.bam'"
+            reads_type = 'subreads'
         if not re.match(r'^\d+_', well_id):
             try:
                 well_id = check_wells(base_path, well_id, fname)
             except ValueError as e:
                 fname = "'*.hifi_reads.bam'"
                 well_id = check_wells(base_path, well_id, fname)
+                reads_type = 'hifi'
     else:
+        reads_type = 'hifi'
         if barcode is not None:
             fname = f'hifi_reads/*.hifi_reads.{barcode}.bam'
         else:
@@ -70,14 +74,13 @@ def check_bam_files(row):
         row['bam'] = result
         row['bam_size'] = sizeof_fmt(result)
         row['Flowcell ID'] = tmp[0]
+        row['reads_type'] = reads_type
         
         return row
     except AssertionError as e:
         if len(files) == 0:
             print(f"No bam files found for {base_path}/{well_id}/{fname}")
-            row['bam'] = None
-            row['Flowcell ID'] = None
-            row['bam_size'] = None
+            row[['bam', 'Flowcell ID', 'bam_size', 'reads_type']] = [None, None, None, None]
             return row
         raise e
 
