@@ -105,6 +105,6 @@ if __name__ == '__main__':
     base_path = '/net/seq/pacbio/runs/'
     df['base_path'] = base_path + df['Run ID (Data folder)']
 
-    added_cols = ['Flowcell ID', 'Sample Well ID fixed', 'bam', 'bam_size']
+    added_cols = ['Flowcell ID', 'Sample Well ID fixed', 'bam', 'reads_type', 'bam_size']
     result_cols = list(df.columns) + added_cols if args.include_initial_columns else added_cols
     df.progress_apply(check_bam_files, axis=1)[result_cols].to_csv(args.output_file, sep='\t', index=False)
