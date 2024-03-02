@@ -28,7 +28,7 @@ def check_wells(base_path, well_id, fname):
         d = letter_index(well_id[0])
         files = glob.glob(f"{base_path}/*_{well_id}/{fname}") 
         new_well_id = f"{d}_{well_id}"
-        assert files == glob.glob(f"{base_path}/{new_well_id}/{fname}"), f"Well ID does not match the expected pattern, multiple wells correspond to {well_id}"
+        assert files == glob.glob(f"{base_path}/{new_well_id}/{fname}"), f"Well ID does not match the expected pattern, multiple wells correspond to {well_id}. base_path: {base_path}, fname: {fname}"
     else:
         new_well_id = well_id
         files = glob.glob(f"{base_path}/{new_well_id}/{fname}")
