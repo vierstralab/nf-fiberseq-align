@@ -77,18 +77,18 @@ def check_bam_files(row):
         tmp = os.path.basename(result).split('.')
         expected_len = 3 if barcode is None else 4
         assert len(tmp) == expected_len, f"Expected {expected_len} parts in the filename, found {len(tmp)}: {tmp}"
-        row['bam'] = result
-        row['bam_size'] = sizeof_fmt(result)
-        row['Flowcell ID'] = tmp[0]
+        row['reads'] = result
+        row['reads_size'] = sizeof_fmt(result)
+        row['sample_id'] = tmp[0]
         row['reads_type'] = reads_type
         
         return row
     except AssertionError as e:
         if len(files) == 0:
             print(f"No bam files found for {base_path}/{well_id}/{fname}")
-            row['bam'] = None
-            row['Flowcell ID'] = None
-            row['bam_size'] = None
+            row['reads'] = None
+            row['reads_size'] = None
+            row['sample_id'] = None
             row['reads_type'] = None
             return row
         raise e
@@ -105,6 +105,6 @@ if __name__ == '__main__':
     base_path = '/net/seq/pacbio/runs/'
     df['base_path'] = base_path + df['Run ID (Data folder)']
 
-    added_cols = ['Flowcell ID', 'Sample Well ID fixed', 'bam', 'reads_type', 'bam_size']
+    added_cols = ['sample_id', 'Well ID_fixed', 'reads', 'reads_type', 'reads_size']
     result_cols = list(df.columns) + added_cols if args.include_initial_columns else added_cols
     df.progress_apply(check_bam_files, axis=1)[result_cols].to_csv(args.output_file, sep='\t', index=False)

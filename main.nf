@@ -126,7 +126,7 @@ process to_ucsc_format {
 workflow {
     data = Channel.fromPath(params.samples_file)
         | splitCsv(header: true, sep: "\t")
-        | map(row -> tuple(row.sample_id, file(row.reads), row.sequencer_type))
+        | map(row -> tuple(row.sample_id, file(row.reads), row['Instrument']))
         | branch {
             with_5mc: it[2] == "Revio"
             no_5mc: true
