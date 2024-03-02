@@ -53,9 +53,13 @@ def check_bam_files(row):
             try:
                 well_id = check_wells(base_path, well_id, fname)
             except ValueError as e:
-                fname = "'*.hifi_reads.bam'"
-                well_id = check_wells(base_path, well_id, fname)
-                reads_type = 'hifi'
+                if barcode is None:
+                    print('subreads not found')
+                    fname = "'*.hifi_reads.bam'"
+                    well_id = check_wells(base_path, well_id, fname)
+                    reads_type = 'hifi'
+                else:
+                    raise e
     else:
         reads_type = 'hifi'
         if barcode is not None:
@@ -80,7 +84,7 @@ def check_bam_files(row):
     except AssertionError as e:
         if len(files) == 0:
             print(f"No bam files found for {base_path}/{well_id}/{fname}")
-            row[['bam', 'Flowcell ID', 'bam_size', 'reads_type']] = [None, None, None, None]
+            df.iloc[0, ['bam', 'Flowcell ID', 'bam_size', 'reads_type']] = [None, None, None, None]
             return row
         raise e
 
