@@ -56,7 +56,7 @@ def check_bam_files(row):
             barcode = f"{barcode}--{barcode}"
             fname = f'{barcode}/*.hifi_reads.{barcode}.bam'
         else:
-            fname = "*.hifi_reads*.bam$"
+            fname = "*.hifi_reads.bam"
         
         try:
             well_id = check_wells(base_path, well_id, fname)
@@ -81,6 +81,9 @@ def check_bam_files(row):
             fname = f'hifi_reads/*.hifi_reads.{barcode}.bam'
         else:
             fname = 'hifi_reads/*.hifi_reads.bam'
+            if len(glob.glob(f"{base_path}/{well_id}/{fname}")) == 0:
+                fname = 'hifi_reads/*.hifi_reads.default.bam'
+
     # Find all bam files matching the pattern
     files = glob.glob(f"{base_path}/{well_id}/{fname}")
     row['Well ID fixed'] = well_id
