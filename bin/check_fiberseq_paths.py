@@ -56,7 +56,7 @@ def check_bam_files(row):
             barcode = f"{barcode}--{barcode}"
             fname = f'{barcode}/*.hifi_reads.{barcode}.bam'
         else:
-            fname = "*.hifi_reads.bam"
+            fname = "*.hifi_reads*.bam$"
         
         try:
             well_id = check_wells(base_path, well_id, fname)
