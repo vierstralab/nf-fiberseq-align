@@ -30,13 +30,13 @@ def check_wells(base_path, well_id, fname):
         new_well_id = f"{d}_{well_id}"
         new_well_id_files = glob.glob(f"{base_path}/{new_well_id}/{fname}")
         if len(files) == 1 and len(new_well_id_files) == 0:
-            well_id = files[0].split('/')[-2]
+            new_well_id = files[0].split('/')[-2]
             print (f"Well_id doesn't match expected pattern {new_well_id} found {well_id} instead. base_path: {base_path}, fname: {fname}")
         else:
-            assert files == glob.glob(f"{base_path}/{new_well_id}/{fname}"), f"Well ID does not match the expected pattern, multiple wells correspond to {well_id}. base_path: {base_path}, fname: {fname}"
+            assert files == new_well_id_files, f"Well ID does not match the expected pattern, multiple wells correspond to {well_id}. base_path: {base_path}, fname: {fname}"
     else:
         new_well_id = well_id
-        files = glob.glob(f"{base_path}/{new_well_id}/{fname}")
+        files = new_well_id_files
     assert len(files) <= 1, f"Expected <1 bam file, found {len(files)}: {files}. base_path: {base_path}, well_id: {well_id}, fname: {fname}"
     if len(files) != 1:
         raise ValueError(f"Expected 1 bam file, found {len(files)}: {files}. base_path: {base_path}, well_id: {well_id}, fname: {fname}")
