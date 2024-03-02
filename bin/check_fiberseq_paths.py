@@ -30,6 +30,7 @@ def check_wells(base_path, well_id, fname):
         new_well_id = f"{d}_{well_id}"
         new_well_id_files = glob.glob(f"{base_path}/{new_well_id}/{fname}")
         if len(files) == 1 and len(new_well_id_files) == 0:
+            # hotfix for misc sheet
             print (f"Well_id doesn't match expected pattern {new_well_id} found {well_id} instead. base_path: {base_path}, fname: {fname}")
             new_well_id = files[0].split('/')[-2]
         else:
@@ -82,8 +83,9 @@ def check_bam_files(row):
             fname = f'hifi_reads/*.hifi_reads.{barcode}.bam'
         else:
             fname = 'hifi_reads/*.hifi_reads.bam'
+            # hotfix for misc sheet
             if len(glob.glob(f"{base_path}/{well_id}/{fname}")) == 0:
-                fname = 'hifi_reads/*.hifi_reads.default.bam'
+                fname = 'hifi_reads/*.hifi_reads.default.bam' 
                 expected_len = 4
 
     # Find all bam files matching the pattern
