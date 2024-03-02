@@ -84,7 +84,7 @@ def check_bam_files(row):
     except AssertionError as e:
         if len(files) == 0:
             print(f"No bam files found for {base_path}/{well_id}/{fname}")
-            df.iloc[0, ['bam', 'Flowcell ID', 'bam_size', 'reads_type']] = [None, None, None, None]
+            row.iloc[0, ['bam', 'Flowcell ID', 'bam_size', 'reads_type']] = [None, None, None, None]
             return row
         raise e
 
