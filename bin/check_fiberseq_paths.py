@@ -40,28 +40,28 @@ def check_bam_files(row):
     base_path = row['base_path']
     barcode = None if pd.isna(row['Barcode']) else row['Barcode']
     assert platform in ('Sequel 2e', 'Revio'), f"Platform is not Sequel 2e or Revio: {platform}"
-
+    
+    reads_type = 'hifi'
     if platform == 'Sequel 2e':
         if barcode is not None:
             barcode = f"{barcode}--{barcode}"
             fname = f'{barcode}/*.hifi_reads.{barcode}.bam'
-            reads_type = 'hifi'
         else:
-            fname = "'*.subreads.bam'"
-            reads_type = 'subreads'
+            fname = "*.hifi_reads.bam"
+        
+            
         if not re.match(r'^\d+_', well_id):
             try:
                 well_id = check_wells(base_path, well_id, fname)
             except ValueError as e:
                 if barcode is None:
-                    print('subreads not found')
-                    fname = "'*.hifi_reads.bam'"
+                    print('hifi reads not found')
+                    fname = "*.subreads.bam"
                     well_id = check_wells(base_path, well_id, fname)
-                    reads_type = 'hifi'
+                    reads_type = 'subreads'
                 else:
                     raise e
     else:
-        reads_type = 'hifi'
         if barcode is not None:
             fname = f'hifi_reads/*.hifi_reads.{barcode}.bam'
         else:
