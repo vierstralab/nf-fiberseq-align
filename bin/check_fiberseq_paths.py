@@ -4,6 +4,7 @@ import glob
 import sys
 import re
 from tqdm import tqdm
+import argparse
 
 tqdm.pandas()
 
@@ -14,6 +15,13 @@ def letter_index(letter):
     index = ord(letter) - 64
     return index
 
+def sizeof_fmt(path, suffix="B"):
+    num = os.path.getsize(path)
+    for unit in ("", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"):
+        if abs(num) < 1024.0:
+            return f"{num:3.1f}{unit}{suffix}"
+        num /= 1024.0
+    return f"{num:.1f}Yi{suffix}"
 
 def check_wells(base_path, well_id, fname):
     d = letter_index(well_id[0])
@@ -55,23 +63,31 @@ def check_bam_files(row):
         expected_len = 3 if barcode is None else 4
         assert len(tmp) == expected_len, f"Expected {expected_len} parts in the filename, found {len(tmp)}: {tmp}"
         row['bam'] = result
+        row['bam_size'] = sizeof_fmt(result)
         row['Flowcell ID'] = tmp[0]
         
-        return row[['Flowcell ID', 'Sample Well ID fixed', 'bam']]
+        return row
     except AssertionError as e:
         if len(files) == 0:
             print(f"No bam files found for {base_path}/{well_id}/{fname}")
             row['bam'] = None
             row['Flowcell ID'] = None
-            return row[['Flowcell ID', 'Sample Well ID fixed', 'bam']]
+            row['bam_size'] = None
+            return row
         raise e
 
 
 if __name__ == '__main__':
-    assert len(sys.argv) == 3, "Usage: python check_bam_files.py <input_file> <output_file>"
-    df = pd.read_table(sys.argv[1])
+    parser = argparse.ArgumentParser(description='Fill in missing bam files in the metadata file')
+    parser.add_argument('input_file', type=str, help='Path to metadata file')
+    parser.add_argument('output_file', type=str, help='Path to output file')
+    parser.add_argument('--include_initial_columns', action='store_true', help='Include initial columns in the output file', default=False)
+    args = parser.parse_args()
+
+    df = pd.read_table(args.input_file, low_memory=False)
     base_path = '/net/seq/pacbio/runs/'
     df['base_path'] = base_path + df['Run ID (Data folder)']
-    df.progress_apply(check_bam_files, axis=1).to_csv(sys.argv[2], sep='\t', index=False)
 
-    
+    added_cols = ['Flowcell ID', 'Sample Well ID fixed', 'bam', 'bam_size']
+    result_cols = list(df.columns) + added_cols if args.include_initial_columns else added_cols
+    df.progress_apply(check_bam_files, axis=1)[result_cols].to_csv(args.output_file, sep='\t', index=False)
