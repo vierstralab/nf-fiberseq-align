@@ -24,11 +24,15 @@ def sizeof_fmt(path, suffix="B"):
     return f"{num:.1f}Yi{suffix}"
 
 def check_wells(base_path, well_id, fname):
-    d = letter_index(well_id[0])
-    files = glob.glob(f"{base_path}/*_{well_id}/{fname}") 
-    new_well_id = f"{d}_{well_id}"
-    assert files == glob.glob(f"{base_path}/{new_well_id}/{fname}"), "Well ID does not match the expected pattern"
-    assert len(files) <= 1, f"Expected 1 bam file, found {len(files)}: {files}. base_path: {base_path}, well_id: {well_id}, fname: {fname}"
+    if not re.match(r'^\d+_', well_id):
+        d = letter_index(well_id[0])
+        files = glob.glob(f"{base_path}/*_{well_id}/{fname}") 
+        new_well_id = f"{d}_{well_id}"
+        assert files == glob.glob(f"{base_path}/{new_well_id}/{fname}"), f"Well ID does not match the expected pattern, multiple wells correspond to {well_id}"
+    else:
+        new_well_id = well_id
+        files = glob.glob(f"{base_path}/{new_well_id}/{fname}")
+    assert len(files) <= 1, f"Expected <1 bam file, found {len(files)}: {files}. base_path: {base_path}, well_id: {well_id}, fname: {fname}"
     if len(files) != 1:
         raise ValueError(f"Expected 1 bam file, found {len(files)}: {files}. base_path: {base_path}, well_id: {well_id}, fname: {fname}")
     return new_well_id
@@ -49,18 +53,16 @@ def check_bam_files(row):
         else:
             fname = "*.hifi_reads.bam"
         
-            
-        if not re.match(r'^\d+_', well_id):
-            try:
+        try:
+            well_id = check_wells(base_path, well_id, fname)
+        except ValueError as e:
+            if barcode is None:
+                print('hifi reads not found')
+                fname = "*.subreads.bam"
                 well_id = check_wells(base_path, well_id, fname)
-            except ValueError as e:
-                if barcode is None:
-                    print('hifi reads not found')
-                    fname = "*.subreads.bam"
-                    well_id = check_wells(base_path, well_id, fname)
-                    reads_type = 'subreads'
-                else:
-                    raise e
+                reads_type = 'subreads'
+            else:
+                raise e
     else:
         if barcode is not None:
             fname = f'hifi_reads/*.hifi_reads.{barcode}.bam'
