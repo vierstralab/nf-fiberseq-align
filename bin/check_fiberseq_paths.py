@@ -90,7 +90,16 @@ def check_bam_files(row):
     files = glob.glob(f"{base_path}/{well_id}/{fname}")
     row['Well ID fixed'] = well_id
 
-    assert len(files) == 1, f"Expected 1 bam file, found {len(files)}: {files}. base_path: {base_path}, well_id: {well_id}, fname: {fname}"
+    # FIXME repeated code. A lot of things don't work on misc sheet. All the format are weird there.
+    if len(files) != 1:
+        print(f"Expected 1 bam file, found {len(files)}: {files}. base_path: {base_path}, well_id: {well_id}, fname: {fname}")
+        if len(files) == 0:
+            row['reads'] = None
+            row['reads_size'] = None
+            row['sample_id'] = None
+            row['reads_type'] = None
+            return row
+        raise AssertionError
     result = files[0]
     tmp = os.path.basename(result).split('.')
     assert len(tmp) == expected_len, f"Expected {expected_len} parts in the filename, found {len(tmp)}: {tmp}"
