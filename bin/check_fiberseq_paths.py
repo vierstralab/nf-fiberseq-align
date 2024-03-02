@@ -48,6 +48,7 @@ def check_bam_files(row):
     well_id = row['Sample Well ID']
     base_path = row['base_path']
     barcode = None if pd.isna(row['Barcode']) else row['Barcode']
+    expected_len = 3 if barcode is None else 4
     assert platform in ('Sequel 2e', 'Revio'), f"Platform is not Sequel 2e or Revio: {platform}"
     
     reads_type = 'hifi'
@@ -83,6 +84,7 @@ def check_bam_files(row):
             fname = 'hifi_reads/*.hifi_reads.bam'
             if len(glob.glob(f"{base_path}/{well_id}/{fname}")) == 0:
                 fname = 'hifi_reads/*.hifi_reads.default.bam'
+                expected_len = 4
 
     # Find all bam files matching the pattern
     files = glob.glob(f"{base_path}/{well_id}/{fname}")
@@ -91,7 +93,6 @@ def check_bam_files(row):
     assert len(files) == 1, f"Expected 1 bam file, found {len(files)}: {files}. base_path: {base_path}, well_id: {well_id}, fname: {fname}"
     result = files[0]
     tmp = os.path.basename(result).split('.')
-    expected_len = 3 if barcode is None else 4
     assert len(tmp) == expected_len, f"Expected {expected_len} parts in the filename, found {len(tmp)}: {tmp}"
     row['reads'] = result
     row['reads_size'] = sizeof_fmt(result)
