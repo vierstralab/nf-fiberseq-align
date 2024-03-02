@@ -70,7 +70,7 @@ def check_bam_files(row):
             fname = 'hifi_reads/*.hifi_reads.bam'
     # Find all bam files matching the pattern
     files = glob.glob(f"{base_path}/{well_id}/{fname}")
-    row['Sample Well ID fixed'] = well_id
+    row['Well ID fixed'] = well_id
     try:
         assert len(files) == 1, f"Expected 1 bam file, found {len(files)}: {files}. base_path: {base_path}, well_id: {well_id}, fname: {fname}"
         result = files[0]
@@ -105,6 +105,6 @@ if __name__ == '__main__':
     base_path = '/net/seq/pacbio/runs/'
     df['base_path'] = base_path + df['Run ID (Data folder)']
 
-    added_cols = ['sample_id', 'Well ID_fixed', 'reads', 'reads_type', 'reads_size']
+    added_cols = ['sample_id', 'Well ID fixed', 'reads', 'reads_type', 'reads_size']
     result_cols = list(df.columns) + added_cols if args.include_initial_columns else added_cols
     df.progress_apply(check_bam_files, axis=1)[result_cols].to_csv(args.output_file, sep='\t', index=False)
