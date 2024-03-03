@@ -140,6 +140,7 @@ workflow {
         | call_m6a
         | align_bam
         | extract_signal
+        | to_ucsc_format
 }
 
 workflow extractSignal {
