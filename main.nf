@@ -90,7 +90,7 @@ process extract_signal {
 process to_ucsc_format {
     tag "${prefix}"
     publishDir "${params.outdir}/ucsc_format"
-
+    conda "${params.conda}"
 
     input:
         tuple val(prefix), path(per_fiber_signal)
