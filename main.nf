@@ -114,10 +114,7 @@ process to_ucsc_format {
             }'  \
         | sort-bed - > tmp.bed
 
-    { 
-        echo -e "#chr\tstart\tend\tstrand\tfiber\tref"; 
-        bedtools getfasta -fi "${params.genome_fasta_file}" -bed tmp.bed -bedOut; 
-    } | bgzip > ${name}
+    echo -e "#chr\tstart\tend\tstrand\tfiber\tref" | cat - <(bedtools getfasta -fi "${params.genome_fasta_file}" -bed tmp.bed -bedOut) | bgzip > ${name}
 
     tabix ${name}
     """
