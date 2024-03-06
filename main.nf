@@ -91,6 +91,7 @@ process to_ucsc_format {
     tag "${prefix}"
     publishDir "${params.outdir}/ucsc_format"
     conda "${params.conda}"
+    scratch true
 
     input:
         tuple val(prefix), path(per_fiber_signal)
@@ -112,12 +113,11 @@ process to_ucsc_format {
                 } \
             }'  \
         | sort-bed - > tmp.bed
-    
-    bedtools getfasta \
-        -fi ${params.genome_fasta_file} \
-        -bed tmp.bed \
-        -bedOut \
-        | bgzip -c > ${name}
+
+    { 
+        echo -e "#chr\tstart\tend\tstrand\tfiber\tref"; 
+        bedtools getfasta -fi "${params.genome_fasta_file}" -bed tmp.bed -bedOut; 
+    } | bgzip > ${name}
 
     tabix ${name}
     """
