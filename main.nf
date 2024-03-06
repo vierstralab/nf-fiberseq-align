@@ -104,7 +104,7 @@ process to_ucsc_format {
         | tail -n +2 \
         | awk -v OFS='\t' -F'\t' \
             '{ \
-                split(\$28, positions, ","); \
+                split(\$29, positions, ","); \ 
                 for (i in positions) { \
                     if (positions[i] != "" && positions[i] != "-1" && positions[i] != ".") { \
                         print \$1, positions[i], positions[i] + 1, \$6, \$4  \
