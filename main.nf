@@ -123,6 +123,26 @@ process to_ucsc_format {
     """
 }
 
+process convert_to_coo {
+    tag "${prefix}"
+    publishDir "${params.outdir}/coo_format"
+    conda "${params.conda}"
+    scratch true
+
+    input:
+        tuple val(prefix), path(per_fiber)
+
+    output:
+        tuple val(prefix), path(name)
+
+    script:
+    name = "${prefix}.coo.gz"
+    """
+    python3 $moduleDir/bin/convert_to_coo.py ${per_fiber} ${name}
+    """
+}
+
+
 workflow {
     data = Channel.fromPath(params.samples_file)
         | splitCsv(header: true, sep: "\t")
@@ -140,7 +160,7 @@ workflow {
         | call_m6a
         | align_bam
         | extract_signal
-        | to_ucsc_format
+        | convert_to_coo
 }
 
 workflow extractSignal {
