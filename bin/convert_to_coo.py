@@ -99,7 +99,7 @@ def process_chrom_sizes(chromsizes_path):
     return df
 
 
-def create_coo_from_bed(bed_df, chromsizes_path, fasta_path):
+def create_coo_from_bed(bed_df, chromsizes_path):
     """
     Create a h5 file from a bed file.
 
@@ -108,7 +108,6 @@ def create_coo_from_bed(bed_df, chromsizes_path, fasta_path):
         chromsizes_path (str): Path to the chromsizes file.
         h5_path (str): Path to the h5 file.
     """
-    fasta_extractor = FastaExtractor(fasta_path)
     chromsizes_df = process_chrom_sizes(chromsizes_path)
     incorrect_positions = set(["", "-1", "."])
     
@@ -120,20 +119,14 @@ def create_coo_from_bed(bed_df, chromsizes_path, fasta_path):
     coo_col = []
     print('Starting processing')
     for i, row in tqdm(bed_df.iterrows(), total=len(bed_df.index)):
-        data = np.array([int(x) for x in row['ref_m6a'].strip(',').split(',') if x not in incorrect_positions]) - row['start']
-        sequence = fasta_extractor[GenomicInterval(row['chrom'], row['start'], row['end'])]
-        if row['strand'] == '-':
-            idxs = [x.start() for x in re.finditer('T', sequence)]
-        else:
-            idxs = [x.start() for x in re.finditer('A', sequence)]
-        idxs = np.array(idxs)
-        is_in_data = np.isin(idxs, data)
-
-        coo_data.append(np.where(is_in_data, 2, 1))
-        coo_row.append(np.full_like(idxs, i))
-        coo_col.append(idxs + row['start_index'])
-
-        #not_in_idxs = np.isin(data, idxs, invert=True)
+        assert row['strand'] in {'+', '-'}
+        fwd = -1 if row['strand'] == '+' else 1
+        for j, mark in enumerate(['ref_m6a', 'ref_5mC'], 1):
+            meth_pos = np.array([int(x) for x in row[mark].strip(',').split(',') if x not in incorrect_positions]) - row['start']
+            meth_data = np.full_like(meth_pos, j) * fwd
+            coo_data.append(meth_data)
+            coo_row.append(np.full_like(meth_data, i))
+            coo_col.append(meth_pos + row['start_index'])
 
     print('Finished processing. Creating sparse matrix.')
     coo_data = np.concatenate(coo_data).astype(np.uint8)
@@ -149,7 +142,6 @@ if __name__ == "__main__":
     parser.add_argument('bed', help='Path to bed file')
     parser.add_argument('output', help='Path to output npz file')
     parser.add_argument('--chromsizes', help='Path to chromsizes file', default=None)
-    parser.add_argument('--fasta', help='Path to genome fasta file', default=None)
     parser.add_argument('--chrom', help='Path to genome fasta file', default=None)
     args = parser.parse_args()
 
@@ -158,7 +150,7 @@ if __name__ == "__main__":
     if args.chrom is not None:
         bed_df.query(f'chrom == "{args.chrom}"', inplace=True)
 
-    coo = create_coo_from_bed(bed_df, args.chromsizes, args.fasta)
+    coo = create_coo_from_bed(bed_df, args.chromsizes)
     print('Converting to csc')
     save_matrix_to_h5py(coo.tocsc(), args.output)
     #save_npz(args.output, coo)

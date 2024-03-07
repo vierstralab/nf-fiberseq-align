@@ -141,8 +141,7 @@ process convert_to_coo {
     python3 $moduleDir/bin/convert_to_coo.py \
         ${per_fiber} \
         ${name} \
-        --chromsizes ${params.chrom_sizes} \
-        --fasta ${params.genome_fasta_file}
+        --chromsizes ${params.chrom_sizes}
     """
 }
 
