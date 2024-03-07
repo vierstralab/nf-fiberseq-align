@@ -99,7 +99,7 @@ def process_chrom_sizes(chromsizes_path):
     return df
 
 
-def create_coo_from_bed(bed_df, chromsizes_path):
+def create_coo_from_bed(bed_df, chromsizes_df):
     """
     Create a h5 file from a bed file.
 
@@ -108,7 +108,7 @@ def create_coo_from_bed(bed_df, chromsizes_path):
         chromsizes_path (str): Path to the chromsizes file.
         h5_path (str): Path to the h5 file.
     """
-    chromsizes_df = process_chrom_sizes(chromsizes_path)
+    
     incorrect_positions = set(["", "-1", "."])
     
     bed_df['chrom_index'] = bed_df['chrom'].map(chromsizes_df['cumsum_size'])
@@ -145,12 +145,17 @@ if __name__ == "__main__":
     parser.add_argument('--chrom', help='Path to genome fasta file', default=None)
     args = parser.parse_args()
 
-    
+    chromsizes_df = process_chrom_sizes(args.chromsizes)
     bed_df = pd.read_table(args.bed).rename(columns=dict(zip(['#ct','st','en'], ['chrom', 'start', 'end'])))
     if args.chrom is not None:
         bed_df.query(f'chrom == "{args.chrom}"', inplace=True)
 
-    coo = create_coo_from_bed(bed_df, args.chromsizes)
+    coo = create_coo_from_bed(bed_df, args.chromsizes, chromsizes_df)
     print('Converting to csc')
-    save_to_h5py(coo.tocsc(), args.output)
+    save_to_h5py(coo.tocsc(), 
+        args.output, 
+        chrom_start_index=chromsizes_df['cumsum_size'].to_numpy(),
+        chrom_name=chromsizes_df.index.to_numpy().astype('S'),
+        chrom_size=chromsizes_df['size'].to_numpy().astype(int)
+    )
     #save_npz(args.output, coo)
