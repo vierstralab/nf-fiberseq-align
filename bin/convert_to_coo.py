@@ -91,7 +91,7 @@ from tqdm import tqdm
 import argparse
 import pandas as pd
 import numpy as np
-from save_to_h5 import save_matrix_to_h5py
+from save_to_h5 import save_to_h5py
 
 def process_chrom_sizes(chromsizes_path):
     df = pd.read_table(chromsizes_path, names=['chrom', 'size']).set_index('chrom').sort_index()
@@ -129,7 +129,7 @@ def create_coo_from_bed(bed_df, chromsizes_path):
             coo_col.append(meth_pos + row['start_index'])
 
     print('Finished processing. Creating sparse matrix.')
-    coo_data = np.concatenate(coo_data).astype(np.uint8)
+    coo_data = np.concatenate(coo_data).astype(np.int8)
     coo_row = np.concatenate(coo_row)
     coo_col = np.concatenate(coo_col)
     return coo_matrix((coo_data, (coo_row, coo_col)), shape=(len(bed_df), chromsizes_df['size'].sum()))
@@ -152,5 +152,5 @@ if __name__ == "__main__":
 
     coo = create_coo_from_bed(bed_df, args.chromsizes)
     print('Converting to csc')
-    save_matrix_to_h5py(coo.tocsc(), args.output)
+    save_to_h5py(coo.tocsc(), args.output)
     #save_npz(args.output, coo)
