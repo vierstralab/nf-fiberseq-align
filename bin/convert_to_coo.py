@@ -4,6 +4,7 @@ from scipy.sparse import csc_matrix
 import pandas as pd
 import sys
 
+
 class base_extractor(object):
     def __init__(self, filename, **kwargs):
         self.filename = filename
@@ -87,6 +88,8 @@ from genome_tools.data.extractors import fasta_extractor as FastaExtractor
 from genome_tools.genomic_interval import genomic_interval as GenomicInterval
 import re
 from scipy.sparse import coo_matrix, save_npz
+from tqdm import tqdm
+
 
 def process_chrom_sizes(chromsizes_path):
     df = pd.read_table(chromsizes_path, names=['chrom', 'size']).set_index('chrom').sort_index()
@@ -113,24 +116,28 @@ def create_h5_from_bed(bed_path, chromsizes_path, fasta_path):
     coo_data = []
     coo_row = []
     coo_col = []
-    for i, row in bed_df.iterrows():
-        data = set(np.array([int(x) for x in row['ref_m6a'].strip(',').split(',') if x not in incorrect_positions]) - row['start'])
+    print('Starting processing')
+    for i, row in tqdm(bed_df.iterrows(), total=len(bed_df.index)):
+        data = np.array([int(x) for x in row['ref_m6a'].strip(',').split(',') if x not in incorrect_positions]) - row['start']
         sequence = fasta_extractor[GenomicInterval(row['chrom'], row['start'], row['end'])]
         if row['strand'] == '-':
             idxs = [x.start() for x in re.finditer('T', sequence)]
         else:
             idxs = [x.start() for x in re.finditer('A', sequence)]
-#         print(min(idxs), min(data, default=0))
-        for idx in idxs:
-            coo_data.append(2 if idx in data else 1)
-            coo_col.append(row['start_index'] + idx)
-            coo_row.append(i)
+        idxs = np.array(idxs)
+        is_in_data = np.isin(idxs, data)
+
+        coo_data.append(np.where(is_in_data, 2, 1))
+        coo_row.append(np.full_like(idxs, i))
+        coo_col.append(idxs + row['start_index'])
+
+        #not_in_idxs = np.isin(data, idxs, invert=True)
+
+    print('Finished processing. Creating sparse matrix.')
+    coo_data = np.concatenate(coo_data)
+    coo_row = np.concatenate(coo_row)
+    coo_col = np.concatenate(coo_col)
     return coo_matrix((coo_data, (coo_row, coo_col)), shape=(len(bed_df), chromsizes_df['size'].sum()))
-#     csc = coo_matrix((coo_data, (coo_row, coo_col)), shape=(len(bed_df), chromsizes_df['size'].sum())).tocsc()
-#     with h5py.File(h5_path, 'w') as h5:
-#         h5.create_dataset('indptr', data=csc.indptr)
-#         h5.create_dataset('indices', data=csc.indices)
-#         h5.create_dataset('data', data=csc.data)
 
 
 
