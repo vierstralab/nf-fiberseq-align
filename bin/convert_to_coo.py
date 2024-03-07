@@ -156,8 +156,8 @@ if __name__ == "__main__":
     print('Converting to csc')
     save_to_h5py(coo.tocsc(), 
         args.output, 
-        chrom_start_index=chromsizes_df['cumsum_size'].to_numpy().astype(int),
-        chrom_name=chromsizes_df.index.to_numpy().astype('S'),
-        chrom_size=chromsizes_df['size'].to_numpy().astype(int)
+        chrom_start_indices=chromsizes_df['cumsum_size'].to_numpy().astype(int),
+        chrom_names=chromsizes_df.index.to_numpy().astype('S'),
+        chrom_sizes=chromsizes_df['size'].to_numpy().astype(int)
     )
     #save_npz(args.output, coo)
