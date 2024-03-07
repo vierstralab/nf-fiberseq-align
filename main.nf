@@ -138,7 +138,11 @@ process convert_to_coo {
     script:
     name = "${prefix}.coo.gz"
     """
-    python3 $moduleDir/bin/convert_to_coo.py ${per_fiber} ${name}
+    python3 $moduleDir/bin/convert_to_coo.py \
+        ${per_fiber} \
+        ${name} \
+        --chromsizes ${params.chrom_sizes} \
+        --fasta ${params.genome_fasta_file}
     """
 }
 
@@ -163,10 +167,16 @@ workflow {
         | convert_to_coo
 }
 
+
 workflow extractSignal {
     Channel.fromPath(params.samples_file)
         | splitCsv(header: true, sep: "\t")
         | map(row -> tuple(row.sample_id, file(row.bam), file(row.bam_index)))
         | extract_signal
         | to_ucsc_format
+}
+
+workflow test {
+    Channel.of(tuple("test", file("/home/sabramov/tmp/fs_fiber_test.bed")))
+        | convert_to_coo
 }

@@ -4,7 +4,6 @@ from scipy.sparse import csc_matrix
 import pandas as pd
 import sys
 
-
 class base_extractor(object):
     def __init__(self, filename, **kwargs):
         self.filename = filename
@@ -89,7 +88,9 @@ from genome_tools.genomic_interval import genomic_interval as GenomicInterval
 import re
 from scipy.sparse import coo_matrix, save_npz
 from tqdm import tqdm
-
+import argparse
+import pandas as pd
+import numpy as np
 
 def process_chrom_sizes(chromsizes_path):
     df = pd.read_table(chromsizes_path, names=['chrom', 'size']).set_index('chrom').sort_index()
@@ -143,7 +144,14 @@ def create_h5_from_bed(bed_path, chromsizes_path, fasta_path):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Converts output of fibertools-rs extract command to sparse matrix')
+    parser.add_argument('bed', help='Path to bed file')
+    parser.add_argument('output', help='Path to output npz file')
+    parser.add_argument('--chromsizes', help='Path to chromsizes file', default=None)
+    parser.add_argument('--fasta', help='Path to genome fasta file', default=None)
+    args = parser.parse_args()
+
     chromsizes_path = "/net/seq/data/genomes/human/GRCh38/noalts/GRCh38_no_alts.chrom_sizes"
     fasta_path = '/net/seq/data/genomes/human/GRCh38/noalts/GRCh38_no_alts.fa'
-    coo = create_h5_from_bed(sys.argv[1], chromsizes_path, fasta_path)
-    save_npz(sys.argv[2], coo)
+    coo = create_h5_from_bed(args.bed, args.chromsizes, args.fasta)
+    save_npz(args.output, coo)
