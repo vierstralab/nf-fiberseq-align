@@ -91,6 +91,7 @@ from tqdm import tqdm
 import argparse
 import pandas as pd
 import numpy as np
+from save_to_h5 import save_matrix_to_h5py
 
 def process_chrom_sizes(chromsizes_path):
     df = pd.read_table(chromsizes_path, names=['chrom', 'size']).set_index('chrom').sort_index()
@@ -98,19 +99,19 @@ def process_chrom_sizes(chromsizes_path):
     return df
 
 
-def create_h5_from_bed(bed_path, chromsizes_path, fasta_path):
+def create_coo_from_bed(bed_df, chromsizes_path, fasta_path):
     """
     Create a h5 file from a bed file.
 
     Parameters:
-        bed_path (str): Path to the bed file.
+        bed_df (pd.DataFrame): Bed file with the following columns: chrom, start, end, ref_m6a, strand.
         chromsizes_path (str): Path to the chromsizes file.
         h5_path (str): Path to the h5 file.
     """
     fasta_extractor = FastaExtractor(fasta_path)
     chromsizes_df = process_chrom_sizes(chromsizes_path)
     incorrect_positions = set(["", "-1", "."])
-    bed_df = pd.read_table(bed_path).rename(columns=dict(zip(['#ct','st','en'], ['chrom', 'start', 'end'])))
+    
     bed_df['chrom_index'] = bed_df['chrom'].map(chromsizes_df['cumsum_size'])
     bed_df['start_index'] = bed_df['chrom_index'] + bed_df['start']
     
@@ -149,7 +150,15 @@ if __name__ == "__main__":
     parser.add_argument('output', help='Path to output npz file')
     parser.add_argument('--chromsizes', help='Path to chromsizes file', default=None)
     parser.add_argument('--fasta', help='Path to genome fasta file', default=None)
+    parser.add_argument('--chrom', help='Path to genome fasta file', default=None)
     args = parser.parse_args()
 
-    coo = create_h5_from_bed(args.bed, args.chromsizes, args.fasta)
-    save_npz(args.output, coo)
+    
+    bed_df = pd.read_table(args.bed).rename(columns=dict(zip(['#ct','st','en'], ['chrom', 'start', 'end'])))
+    if args.chrom is not None:
+        bed_df.query(f'chrom == "{args.chrom}"', inplace=True)
+
+    coo = create_coo_from_bed(bed_df, args.chromsizes, args.fasta)
+    print('Converting to csc')
+    save_matrix_to_h5py(coo.tocsc())
+    #save_npz(args.output, coo)

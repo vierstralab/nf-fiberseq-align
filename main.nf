@@ -136,7 +136,7 @@ process convert_to_coo {
         tuple val(prefix), path(name)
 
     script:
-    name = "${prefix}.coo.npz"
+    name = "${prefix}.coo.h5"
     """
     python3 $moduleDir/bin/convert_to_coo.py \
         ${per_fiber} \
