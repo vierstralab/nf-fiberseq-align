@@ -22,7 +22,6 @@ class FiberSeqExtractor(base_extractor):
 
     def __init__(self, filename, chromsizes_path, **kwargs):
         super(FiberSeqExtractor, self).__init__(filename, **kwargs)
-        self.chromsizes_df = process_chrom_sizes(chromsizes_path)
         self.h5 = h5py.File(filename, 'r')
     
     def __getitem__(self, interval):
@@ -76,8 +75,9 @@ class FiberSeqExtractor(base_extractor):
         Returns:
             tuple: Start and end index of the interval in the genome.
         """
-
-        chrom_start_index = self.chromsizes_df.loc[interval.chrom, 'cumsum_size']
+        chr_index = np.where(self.h5['chrom_name'] == interval.chrom)
+        assert chr_index.size == 1
+        chrom_start_index = self.h5['chrom_start_index'][chr_index[0]][0]
         start_index = chrom_start_index + interval.start
         end_index = chrom_start_index + interval.end
         return start_index, end_index
@@ -106,7 +106,9 @@ def create_coo_from_bed(bed_df, chromsizes_df):
     Parameters:
         bed_df (pd.DataFrame): Bed file with the following columns: chrom, start, end, ref_m6a, strand.
         chromsizes_path (str): Path to the chromsizes file.
-        h5_path (str): Path to the h5 file.
+    
+    Returns:
+        coo_matrix: Sparse matrix with the methylation data.
     """
     
     incorrect_positions = set(["", "-1", "."])
@@ -150,7 +152,7 @@ if __name__ == "__main__":
     if args.chrom is not None:
         bed_df.query(f'chrom == "{args.chrom}"', inplace=True)
 
-    coo = create_coo_from_bed(bed_df, args.chromsizes, chromsizes_df)
+    coo = create_coo_from_bed(bed_df, chromsizes_df)
     print('Converting to csc')
     save_to_h5py(coo.tocsc(), 
         args.output, 
