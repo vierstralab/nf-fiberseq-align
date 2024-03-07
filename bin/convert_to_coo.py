@@ -135,7 +135,7 @@ def create_h5_from_bed(bed_path, chromsizes_path, fasta_path):
         #not_in_idxs = np.isin(data, idxs, invert=True)
 
     print('Finished processing. Creating sparse matrix.')
-    coo_data = np.concatenate(coo_data)
+    coo_data = np.concatenate(coo_data).astype(np.uint8)
     coo_row = np.concatenate(coo_row)
     coo_col = np.concatenate(coo_col)
     return coo_matrix((coo_data, (coo_row, coo_col)), shape=(len(bed_df), chromsizes_df['size'].sum()))
