@@ -126,7 +126,7 @@ process to_ucsc_format {
 process convert_to_coo {
     tag "${prefix}"
     publishDir "${params.outdir}/coo_format"
-    conda "${params.conda}"
+    conda "/home/sabramov/miniconda3/envs/tensorflow"
     scratch true
 
     input:
