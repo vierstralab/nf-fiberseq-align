@@ -160,5 +160,5 @@ if __name__ == "__main__":
 
     coo = create_coo_from_bed(bed_df, args.chromsizes, args.fasta)
     print('Converting to csc')
-    save_matrix_to_h5py(coo.tocsc())
+    save_matrix_to_h5py(coo.tocsc(), args.output)
     #save_npz(args.output, coo)
