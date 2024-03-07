@@ -122,7 +122,7 @@ def create_coo_from_bed(bed_df, chromsizes_df):
     print('Starting processing')
     for i, row in tqdm(bed_df.iterrows(), total=len(bed_df.index)):
         assert row['strand'] in {'+', '-'}
-        fwd = -1 if row['strand'] == '+' else 1
+        fwd = 1 if row['strand'] == '+' else -1
         for j, mark in enumerate(['ref_m6a', 'ref_5mC'], 1):
             meth_pos = np.array([int(x) for x in row[mark].strip(',').split(',') if x not in incorrect_positions]) - row['start']
             meth_data = np.full_like(meth_pos, j) * fwd
