@@ -151,7 +151,5 @@ if __name__ == "__main__":
     parser.add_argument('--fasta', help='Path to genome fasta file', default=None)
     args = parser.parse_args()
 
-    chromsizes_path = "/net/seq/data/genomes/human/GRCh38/noalts/GRCh38_no_alts.chrom_sizes"
-    fasta_path = '/net/seq/data/genomes/human/GRCh38/noalts/GRCh38_no_alts.fa'
     coo = create_h5_from_bed(args.bed, args.chromsizes, args.fasta)
     save_npz(args.output, coo)
