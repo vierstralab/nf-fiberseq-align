@@ -13,14 +13,14 @@ class base_extractor(object):
 
 
 class FiberSeqExtractor(base_extractor):
-    def __init__(self, filename, **kwargs):
+    def __init__(self, filename, full_overlap=False, **kwargs):
         super(FiberSeqExtractor, self).__init__(filename, **kwargs)
         self.h5 = h5py.File(filename, 'r')
         self.chrom_indices = self.h5['chrom_names'][:]
+        self.full_overlap = full_overlap
     
     def __getitem__(self, interval):
         ids_range = self.interval_to_ids(interval)
-        self.h5['fiber_starts'] < ids_range[0]
         # implement any post processing steps here
         return self.read_sparse_matrix(ids_range)
 
@@ -54,11 +54,32 @@ class FiberSeqExtractor(base_extractor):
         new_indptr =  indptr_slice - data_start
         new_data = self.h5['data'][data_start:data_end]
         new_indices = self.h5['indices'][data_start:data_end]
+        valid_fibers = self.filter_empty_fibers(
+            (new_indices.min(), new_indices.max() + 1),
+            col_indices_range
+        )
+    
         new_indices -= new_indices.min()
-        new_shape = (max(new_indices) + 1, len(new_indptr) - 1)
-    
-        return csc_matrix((new_data, new_indices, new_indptr), shape=new_shape)
-    
+        new_shape = (np.max(new_indices) + 1, len(new_indptr) - 1)
+        matrix = csc_matrix((new_data, new_indices, new_indptr), shape=new_shape)
+        return matrix.tocsr()[valid_fibers]
+
+    def filter_empty_fibers(self, indices, col_indices_range):
+        """
+        Remove empty fibers from the indices.
+
+        Parameters:
+            indices (tuple): Start and end index of the extracted fibers
+        """
+        fiber_ends = self.h5['fiber_ends'][indices[0]: indices[1]]
+
+        mask_unique = fiber_ends >= col_indices_range[0]
+        
+        if self.full_overlap:
+            fiber_starts = self.h5['fiber_starts'][indices[0]: indices[1]]
+            mask_unique *= (fiber_starts <= col_indices_range[0]) & (fiber_ends >= col_indices_range[1])
+        return mask_unique
+
     def interval_to_ids(self, interval):
         """
         Convert genomic interval to index in the genome.
@@ -76,7 +97,6 @@ class FiberSeqExtractor(base_extractor):
         chrom_start_index = self.h5['chrom_start_indices'][chr_index[0]]
         start_index = chrom_start_index + interval.start
         end_index = chrom_start_index + interval.end
-        print(start_index, end_index)
         return start_index, end_index
 
 
