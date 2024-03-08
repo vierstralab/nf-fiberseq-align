@@ -142,6 +142,7 @@ def create_coo_from_bed(bed_df, genome_length):
             mo_pos = np.array([int(x) for x in row[mo].strip(',').split(',') if x not in incorrect_positions]) - row['start']
             if mo_pos.size == np.unique(mo_pos).size:
                 print(row['fiber'])
+                print(mo_pos.size == np.unique(mo_pos).size)
                 unique, counts = np.unique(mo_pos, return_counts=True)
                 repetitive_numbers = unique[counts > 1]
                 print(repetitive_numbers)
