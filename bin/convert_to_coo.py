@@ -138,12 +138,12 @@ def create_coo_from_bed(bed_df, genome_length):
     for i, row in pbar:
         assert row['strand'] in {'+', '-'}
         fwd = 1 if row['strand'] == '+' else -1
-        for j, mark in enumerate(['ref_m6a', 'ref_5mC'], 1):
-            meth_pos = np.array([int(x) for x in row[mark].strip(',').split(',') if x not in incorrect_positions]) - row['start']
-            meth_data = np.full_like(meth_pos, j) * fwd
-            coo_data.append(meth_data)
-            coo_row.append(np.full_like(meth_data, i))
-            coo_col.append(meth_pos + row['start_index'])
+        for j, mo in enumerate(['ref_5mC', 'ref_m6a'], 1):
+            mo_pos = np.array([int(x) for x in row[mo].strip(',').split(',') if x not in incorrect_positions]) - row['start']
+            assert mo_pos.size == np.unique(mo_pos).size
+            coo_data.append(np.full_like(mo_pos, j) * fwd)
+            coo_row.append(np.full_like(mo_pos, i))
+            coo_col.append(mo_pos + row['start_index'])
 
     pbar.close()
     print('Finished processing. Creating sparse matrix.')
