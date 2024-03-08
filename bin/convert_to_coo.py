@@ -12,20 +12,15 @@ class base_extractor(object):
         raise NotImplementedError
 
 
-def process_chrom_sizes(chromsizes_path):
-    df = pd.read_table(chromsizes_path).set_index('chrom').sort_index()
-    df['cumsum_size'] = df['size'].cumsum().shift(1).fillna(0)
-    return df
-
-
 class FiberSeqExtractor(base_extractor):
-
-    def __init__(self, filename, chromsizes_path, **kwargs):
+    def __init__(self, filename, **kwargs):
         super(FiberSeqExtractor, self).__init__(filename, **kwargs)
         self.h5 = h5py.File(filename, 'r')
+        self.chrom_indices = self.h5['chrom_names'][:]
     
     def __getitem__(self, interval):
         ids_range = self.interval_to_ids(interval)
+        self.h5['fiber_starts'] < ids_range[0]
         # implement any post processing steps here
         return self.read_sparse_matrix(ids_range)
 
@@ -63,7 +58,6 @@ class FiberSeqExtractor(base_extractor):
         new_shape = (max(new_indices) + 1, len(new_indptr) - 1)
     
         return csc_matrix((new_data, new_indices, new_indptr), shape=new_shape)
-
     
     def interval_to_ids(self, interval):
         """
@@ -75,11 +69,14 @@ class FiberSeqExtractor(base_extractor):
         Returns:
             tuple: Start and end index of the interval in the genome.
         """
-        chr_index = np.where(self.h5['chrom_name'] == interval.chrom)
-        assert chr_index.size == 1
-        chrom_start_index = self.h5['chrom_start_index'][chr_index[0]][0]
+        chrom = interval.chrom.encode('utf-8')
+        chr_index = np.where(self.chrom_indices == chrom)[0]
+        if len(chr_index) == 0:
+            raise ValueError(f'Chromosome {chrom} not found in chroms used to create the file.\n', 'Chromlist: ', self.chrom_indices)
+        chrom_start_index = self.h5['chrom_start_indices'][chr_index[0]]
         start_index = chrom_start_index + interval.start
         end_index = chrom_start_index + interval.end
+        print(start_index, end_index)
         return start_index, end_index
 
 
@@ -92,6 +89,7 @@ import argparse
 import pandas as pd
 import numpy as np
 from save_to_h5 import save_to_h5py
+
 
 def process_chrom_sizes(chromsizes_path):
     df = pd.read_table(chromsizes_path, names=['chrom', 'size']).set_index('chrom').sort_index()
@@ -164,6 +162,6 @@ if __name__ == "__main__":
         chrom_names=chromsizes_df.index.to_numpy().astype('S'),
         chrom_sizes=chromsizes_df['size'].to_numpy().astype(int),
         fiber_starts=bed_df['start_index'].to_numpy(),
-        fiber_end=bed_df['end_index'].to_numpy(),
+        fiber_ends=bed_df['end_index'].to_numpy(),
     )
     #save_npz(args.output, coo)
