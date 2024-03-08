@@ -142,13 +142,12 @@ process convert_to_coo {
         ${per_fiber} \
         ${name} \
         --chromsizes ${params.chrom_sizes} \
-        --chrom ${chromosome}
     """
 }
 
 
 workflow {
-    chroms = Channel.of('chr2')
+    chroms = Channel.of('all_chr')
     data = Channel.fromPath(params.samples_file)
         | splitCsv(header: true, sep: "\t")
         | map(row -> tuple(row.sample_id, file(row.reads), row['Instrument']))
