@@ -130,18 +130,19 @@ process convert_to_coo {
     scratch true
 
     input:
-        tuple val(prefix), path(per_fiber)
+        tuple val(prefix), path(per_fiber), val(chromosome)
 
     output:
         tuple val(prefix), path(name)
 
     script:
-    name = "${prefix}.coo.h5"
+    name = "${prefix}.${chromosome}.coo.h5"
     """
     python3 $moduleDir/bin/convert_to_coo.py \
         ${per_fiber} \
         ${name} \
-        --chromsizes ${params.chrom_sizes}
+        --chromsizes ${params.chrom_sizes} \
+        --chromosome ${chromosome}
     """
 }
 
@@ -176,6 +177,6 @@ workflow extractSignal {
 }
 
 workflow test {
-    Channel.of(tuple("test", file("/home/sabramov/tmp/fs_fiber_test.bed")))
+    Channel.of(tuple("test", file("/home/sabramov/tmp/fs_fiber_test.bed"), 'chr2'))
         | convert_to_coo
 }
