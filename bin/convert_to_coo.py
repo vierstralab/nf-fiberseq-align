@@ -99,22 +99,18 @@ def process_chrom_sizes(chromsizes_path):
     return df
 
 
-def create_coo_from_bed(bed_df, chromsizes_df):
+def create_coo_from_bed(bed_df, genome_length):
     """
     Create a h5 file from a bed file.
 
     Parameters:
         bed_df (pd.DataFrame): Bed file with the following columns: chrom, start, end, ref_m6a, strand.
-        chromsizes_path (str): Path to the chromsizes file.
+        genome_length (int): Length of the genome
     
     Returns:
         coo_matrix: Sparse matrix with the methylation data.
     """
-    
     incorrect_positions = set(["", "-1", "."])
-    
-    bed_df['chrom_index'] = bed_df['chrom'].map(chromsizes_df['cumsum_size'])
-    bed_df['start_index'] = bed_df['chrom_index'] + bed_df['start']
     
     coo_data = []
     coo_row = []
@@ -133,10 +129,11 @@ def create_coo_from_bed(bed_df, chromsizes_df):
 
     pbar.close()
     print('Finished processing. Creating sparse matrix.')
+    sys.stdout.flush()
     coo_data = np.concatenate(coo_data).astype(np.int8)
     coo_row = np.concatenate(coo_row)
     coo_col = np.concatenate(coo_col)
-    return coo_matrix((coo_data, (coo_row, coo_col)), shape=(len(bed_df), chromsizes_df['size'].sum()))
+    return coo_matrix((coo_data, (coo_row, coo_col)), shape=(len(bed_df), genome_length))
 
 
 
@@ -154,13 +151,19 @@ if __name__ == "__main__":
     if args.chrom is not None:
         bed_df.query(f'chrom == "{args.chrom}"', inplace=True)
 
-    coo = create_coo_from_bed(bed_df, chromsizes_df).tocsc()
+    bed_df['chrom_index'] = bed_df['chrom'].map(chromsizes_df['cumsum_size'])
+    bed_df['start_index'] = bed_df['chrom_index'] + bed_df['start']
+    bed_df['end_index'] = bed_df['chrom_index'] + bed_df['end']
+    csc = create_coo_from_bed(bed_df, chromsizes_df['size'].sum()).tocsc()
+
+
     print('Saving to h5py...')
-    del bed_df
-    save_to_h5py(coo, 
+    save_to_h5py(csc, 
         args.output, 
         chrom_start_indices=chromsizes_df['cumsum_size'].to_numpy().astype(int),
         chrom_names=chromsizes_df.index.to_numpy().astype('S'),
-        chrom_sizes=chromsizes_df['size'].to_numpy().astype(int)
+        chrom_sizes=chromsizes_df['size'].to_numpy().astype(int),
+        fiber_starts=bed_df['start_index'].to_numpy(),
+        fiber_end=bed_df['end_index'].to_numpy(),
     )
     #save_npz(args.output, coo)
