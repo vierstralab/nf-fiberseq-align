@@ -138,7 +138,7 @@ def create_coo_from_bed(bed_df, genome_length):
     for i, row in pbar:
         assert row['strand'] in {'+', '-'}
         fwd = 1 if row['strand'] == '+' else -1
-        for j, mo in enumerate(['ref_5mC', 'ref_m6a'], 1):
+        for j, mo in enumerate(['ref_m6a', 'ref_5mC'], 1):
             mo_pos = np.array([int(x) for x in row[mo].strip(',').split(',') if x not in incorrect_positions]) - row['start']
             if mo_pos.size != np.unique(mo_pos).size:
                 print(row['fiber'])
