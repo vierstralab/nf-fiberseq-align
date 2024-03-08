@@ -142,7 +142,7 @@ process convert_to_coo {
         ${per_fiber} \
         ${name} \
         --chromsizes ${params.chrom_sizes} \
-        --chromosome ${chromosome}
+        --chrom ${chromosome}
     """
 }
 
