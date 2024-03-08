@@ -120,7 +120,8 @@ def create_coo_from_bed(bed_df, chromsizes_df):
     coo_row = []
     coo_col = []
     print('Starting processing')
-    for i, row in tqdm(bed_df.iterrows(), total=len(bed_df.index)):
+    pbar = tqdm(bed_df.iterrows(), total=len(bed_df.index))
+    for i, row in pbar:
         assert row['strand'] in {'+', '-'}
         fwd = 1 if row['strand'] == '+' else -1
         for j, mark in enumerate(['ref_m6a', 'ref_5mC'], 1):
@@ -130,6 +131,7 @@ def create_coo_from_bed(bed_df, chromsizes_df):
             coo_row.append(np.full_like(meth_data, i))
             coo_col.append(meth_pos + row['start_index'])
 
+    pbar.close()
     print('Finished processing. Creating sparse matrix.')
     coo_data = np.concatenate(coo_data).astype(np.int8)
     coo_row = np.concatenate(coo_row)
