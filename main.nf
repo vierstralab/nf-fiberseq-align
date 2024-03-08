@@ -127,7 +127,7 @@ process convert_to_coo {
     tag "${prefix}"
     publishDir "${params.outdir}/coo_format"
     conda "/home/sabramov/miniconda3/envs/tensorflow"
-    scratch true
+    //scratch true
 
     input:
         tuple val(prefix), path(per_fiber), val(chromosome)
