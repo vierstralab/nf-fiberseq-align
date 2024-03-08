@@ -95,6 +95,7 @@ class FiberSeqExtractor(base_extractor):
         if len(chr_index) == 0:
             raise ValueError(f'Chromosome {chrom} not found in chroms used to create the file.\n', 'Chromlist: ', self.chrom_indices)
         chrom_start_index = self.h5['chrom_start_indices'][chr_index[0]]
+        assert self.h5['chrom_sizes'][chr_index[0]] >= interval.end, f"Chromosome size: {self.h5['chrom_sizes'][chr_index[0]]} < {interval.end}"
         start_index = chrom_start_index + interval.start
         end_index = chrom_start_index + interval.end
         return start_index, end_index
