@@ -157,7 +157,7 @@ def create_coo_from_bed(bed_df, genome_length):
     coo_data = np.concatenate(coo_data).astype(np.int8)
     coo_row = np.concatenate(coo_row)
     coo_col = np.concatenate(coo_col)
-    return coo_matrix((coo_data, (coo_row, coo_col)), shape=(len(bed_df), genome_length))
+    return coo_matrix((coo_data, (coo_row, coo_col)), shape=(len(bed_df.index), genome_length))
 
 
 
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     chromsizes_df = process_chrom_sizes(args.chromsizes)
     bed_df = pd.read_table(args.bed).rename(columns=dict(zip(['#ct','st','en'], ['chrom', 'start', 'end'])))
     if args.chrom is not None:
-        bed_df.query(f'chrom == "{args.chrom}"', inplace=True)
+        bed_df = bed_df.query(f'chrom == "{args.chrom}"').reset_index(drop=True)
 
     bed_df['chrom_index'] = bed_df['chrom'].map(chromsizes_df['cumsum_size'])
     bed_df['start_index'] = bed_df['chrom_index'] + bed_df['start']
