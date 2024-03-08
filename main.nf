@@ -148,6 +148,7 @@ process convert_to_coo {
 
 
 workflow {
+    chroms = Channel.of('chr2')
     data = Channel.fromPath(params.samples_file)
         | splitCsv(header: true, sep: "\t")
         | map(row -> tuple(row.sample_id, file(row.reads), row['Instrument']))
@@ -164,6 +165,7 @@ workflow {
         | call_m6a
         | align_bam
         | extract_signal
+        | combine(chroms)
         | convert_to_coo
 }
 
@@ -177,6 +179,6 @@ workflow extractSignal {
 }
 
 workflow test {
-    Channel.of(tuple("test", file("/home/sabramov/tmp/fs_fiber_test.bed"), 'chr2'))
+    Channel.of(tuple("test", file("/home/sabramov/tmp/fs_fiber_test.bed"), 'chr1'))
         | convert_to_coo
 }
