@@ -39,8 +39,8 @@ def check_wells(base_path, well_id, fname):
         new_well_id = well_id
         files = new_well_id_files
     assert len(files) <= 1, f"Expected <1 bam file, found {len(files)}: {files}. base_path: {base_path}, well_id: {well_id}, fname: {fname}"
-    if len(files) != 1:
-        raise ValueError(f"Expected 1 bam file, found {len(files)}: {files}. base_path: {base_path}, well_id: {well_id}, fname: {fname}")
+    if len(files) == 0:
+        raise ValueError(f"Expected 1 bam file, found 0. base_path: {base_path}, well_id: {well_id}, fname: {fname}")
     return new_well_id
 
     
@@ -92,7 +92,7 @@ def check_bam_files(row):
     files = glob.glob(f"{base_path}/{well_id}/{fname}")
     row['Well ID fixed'] = well_id
 
-    # FIXME repeated code. A lot of things don't work on misc sheet. All the format are weird there.
+    # FIXME repeated code for misc sheet. A lot of things don't work on misc sheet. All the formats are weird there.
     if len(files) != 1:
         print(f"Expected 1 bam file, found {len(files)}: {files}. base_path: {base_path}, well_id: {well_id}, fname: {fname}")
         if len(files) == 0:
@@ -107,7 +107,7 @@ def check_bam_files(row):
     assert len(tmp) == expected_len, f"Expected {expected_len} parts in the filename, found {len(tmp)}: {tmp}"
     row['reads'] = result
     row['reads_size'] = sizeof_fmt(result)
-    row['sample_id'] = tmp[0]
+    row['sample_id'] = tmp[0] + ("" if row['barcode'] is None else f"@{row['barcode']}")
     row['reads_type'] = reads_type
         
     return row
