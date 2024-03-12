@@ -14,12 +14,29 @@ class base_extractor(object):
 
 class FiberSeqExtractor(base_extractor):
     def __init__(self, filename, full_overlap=False, **kwargs):
+        """
+        Initialize the FiberSeqExtractor.
+
+        Parameters:
+            filename (str): Path to the h5 file with methylation data.
+            full_overlap (bool): If True, the fibers are filtered to have full overlap with the interval.
+        
+        """
         super(FiberSeqExtractor, self).__init__(filename, **kwargs)
         self.h5 = h5py.File(filename, 'r')
         self.chrom_indices = self.h5['chrom_names'][:]
         self.full_overlap = full_overlap
     
     def __getitem__(self, interval):
+        """
+        Get the methylation data for a given GenomicInterval.
+
+        Parameters:
+            interval (GenomicInterval): Genomic interval (chr, start, end)
+        
+        Returns:
+            csc_matrix: Sparse matrix with the methylation data.
+        """
         ids_range = self.interval_to_ids(interval)
         # implement any post processing steps here
         return self.read_sparse_matrix(ids_range)
@@ -101,18 +118,24 @@ class FiberSeqExtractor(base_extractor):
         return start_index, end_index
 
 
-from genome_tools.data.extractors import fasta_extractor as FastaExtractor
 from genome_tools.genomic_interval import genomic_interval as GenomicInterval
-import re
-from scipy.sparse import coo_matrix, save_npz
+from scipy.sparse import coo_matrix
 from tqdm import tqdm
 import argparse
 import pandas as pd
 import numpy as np
-from save_to_h5 import save_to_h5py
 
 
 def process_chrom_sizes(chromsizes_path):
+    """
+    Read chromsizes file and create a dataframe with genomic coordinate conversion.
+
+    Parameters:
+        chromsizes_path (str): Path to the chromsizes file. No header is expected.
+
+    Returns:
+        pd.DataFrame: Dataframe with the following columns: size, cumsum_size. Index is the chromosome name.
+    """
     df = pd.read_table(chromsizes_path, names=['chrom', 'size']).set_index('chrom').sort_index()
     df['cumsum_size'] = df['size'].cumsum().shift(1).fillna(0)
     return df
@@ -160,6 +183,21 @@ def create_coo_from_bed(bed_df, genome_length):
     return coo_matrix((coo_data, (coo_row, coo_col)), shape=(len(bed_df.index), genome_length))
 
 
+def save_to_h5(matrix, path, **kwargs):
+    """
+    Save a sparse matrix and additional data to a h5 file.
+
+    Parameters:
+        matrix (csc_matrix): Sparse matrix to save.
+        path (str): Path to the output file.
+        kwargs (dict): Additional data to save.
+    """
+    with h5py.File(path, 'w') as f:
+        f.create_dataset('data', data=matrix.data, compression='gzip')
+        f.create_dataset('indices', data=matrix.indices, compression='gzip')
+        f.create_dataset('indptr', data=matrix.indptr, compression='gzip')
+        for kwarg in kwargs:
+            f.create_dataset(kwarg, data=kwargs[kwarg], compression='gzip')
 
 
 if __name__ == "__main__":
@@ -167,7 +205,7 @@ if __name__ == "__main__":
     parser.add_argument('bed', help='Path to bed file')
     parser.add_argument('output', help='Path to output npz file')
     parser.add_argument('--chromsizes', help='Path to chromsizes file', default=None)
-    parser.add_argument('--chrom', help='Path to genome fasta file', default=None)
+    parser.add_argument('--chrom', help='Chromosome to process', default=None)
     args = parser.parse_args()
 
     chromsizes_df = process_chrom_sizes(args.chromsizes)
@@ -180,14 +218,12 @@ if __name__ == "__main__":
     bed_df['end_index'] = bed_df['chrom_index'] + bed_df['end']
     csc = create_coo_from_bed(bed_df, chromsizes_df['size'].sum()).tocsc()
 
-
     print('Saving to h5py...')
-    save_to_h5py(csc, 
-        args.output, 
+    save_to_h5(csc,
+        args.output,
         chrom_start_indices=chromsizes_df['cumsum_size'].to_numpy().astype(int),
         chrom_names=chromsizes_df.index.to_numpy().astype('S'),
         chrom_sizes=chromsizes_df['size'].to_numpy().astype(int),
         fiber_starts=bed_df['start_index'].to_numpy(),
         fiber_ends=bed_df['end_index'].to_numpy(),
     )
-    #save_npz(args.output, coo)
