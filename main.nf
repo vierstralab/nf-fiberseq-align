@@ -150,7 +150,7 @@ workflow {
     chroms = Channel.of('all_chr')
     data = Channel.fromPath(params.samples_file)
         | splitCsv(header: true, sep: "\t")
-        | map(row -> tuple(row.sample_id, file(row.reads), row['Instrument']))
+        | map(row -> tuple(row.sample_id, file(row.reads), row['sequencer_type']))
         | branch {
             with_5mc: it[2] == "Revio"
             no_5mc: true
