@@ -87,63 +87,9 @@ process extract_signal {
     """
 }
 
-process to_ucsc_format {
-    tag "${prefix}"
-    publishDir "${params.outdir}/ucsc_format"
-    conda "${params.conda}"
-    scratch true
 
-    input:
-        tuple val(prefix), path(per_fiber_signal)
-    output:
-        tuple val(prefix), path(name), path("${name}.tbi")
-    
-    script:
-    name = "${prefix}.ucsc.bed.gz"
-    """
-    zcat ${per_fiber_signal} \
-        | tail -n +2 \
-        | awk -v OFS='\t' -F'\t' \
-            '{ \
-                split(\$29, positions, ","); \
-                for (i in positions) { \
-                    if (positions[i] != "" && positions[i] != "-1" && positions[i] != ".") { \
-                        print \$1, positions[i], positions[i] + 1, \$6, \$4  \
-                    } \
-                } \
-            }'  \
-        | sort-bed - > tmp.bed
 
-    (echo -e '#chr\tstart\tend\tstrand\tfiber\tref' && bedtools getfasta \
-            -fi "${params.genome_fasta_file}" \
-            -bed tmp.bed -bedOut) \
-        | bgzip > ${name}
 
-    tabix ${name}
-    """
-}
-
-process convert_to_coo {
-    tag "${prefix}"
-    publishDir "${params.outdir}/coo_format"
-    conda "/home/sabramov/miniconda3/envs/tensorflow"
-    //scratch true
-
-    input:
-        tuple val(prefix), path(per_fiber), val(chromosome)
-
-    output:
-        tuple val(prefix), path(name)
-
-    script:
-    name = "${prefix}.${chromosome}.coo.h5"
-    """
-    python3 $moduleDir/bin/convert_to_coo.py \
-        ${per_fiber} \
-        ${name} \
-        --chromsizes ${params.chrom_sizes} \
-    """
-}
 
 
 workflow {
@@ -165,7 +111,6 @@ workflow {
         | align_bam
         | extract_signal
         | combine(chroms)
-        | convert_to_coo
 }
 
 
@@ -174,10 +119,4 @@ workflow extractSignal {
         | splitCsv(header: true, sep: "\t")
         | map(row -> tuple(row.sample_id, file(row.bam), file(row.bam_index)))
         | extract_signal
-        | to_ucsc_format
-}
-
-workflow test {
-    Channel.of(tuple("test", file("/home/sabramov/tmp/fs_fiber_test.bed"), 'chr1'))
-        | convert_to_coo
 }
