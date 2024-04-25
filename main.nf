@@ -120,8 +120,3 @@ workflow extractSignal {
         | map(row -> tuple(row.sample_id, file(row.bam), file(row.bam_index)))
         | extract_signal
 }
-
-workflow test {
-    Channel.of(tuple("test", file("/home/sabramov/tmp/fs_fiber_test.bed"), 'chr1'))
-        | convert_to_coo
-}
