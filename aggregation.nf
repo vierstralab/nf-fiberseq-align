@@ -8,28 +8,6 @@ def set_key_for_group_tuple(ch) {
     | transpose()
 }
 
-process split_by_chr {
-    label "high_resource"
-    conda "${params.conda}"
-    tag "${prefix}:${chrom}"
-
-    input:
-        tuple val(group_key), val(group), val(prefix), path(bam_file), path(bam_file_index), val(chrom)
-    
-    output:
-        tuple val(group_key), val(group), path(name)
-
-    script:
-    name = "${prefix}.aligned.${chrom}.bam"
-    """
-    samtools view \
-        -@ ${task.cpus} \
-        -b \
-        ${bam_file} \
-        ${chrom} > ${name}
-    """
-}
-
 process merge_bams {
     label "high_resource"
     conda "${params.conda}"
@@ -37,7 +15,7 @@ process merge_bams {
     publishDir "${params.outdir}/merged/${groups[0]}"
 
     input:
-        tuple val(group_key), val(groups), path(bam_files)
+        tuple val(group_key), path(bam_files), path(bam_indices)
     
     output:
         tuple val(group_key), path(name), path("${name}.bai")
@@ -68,23 +46,14 @@ process merge_bams {
 
 
 workflow {
-//    chroms = Channel.fromPath(params.chrom_sizes)
-//        | splitCsv(header: false, sep: "\t")
-//        | map(row -> row[0])
-//        | filter( ~/^chr[XY0-9]+$/ )
-
     Channel.fromPath(params.samples_file)
         | splitCsv(header: true, sep: "\t")
         | map(row -> tuple(
             row.group,
-            row.sample_id,
             file(row.bam),
             file(row.bam_index ?: "${row.bam}.bai")
         )) // group, sample, bam, bam_index
-//        | combine(chroms) // group, sample, bam, bam_index, chrom
-        | map(it -> tuple("${it[0]}.${it[4]}", *it)) // new_id, group, sample, bam, bam_index, chrom
         | set_key_for_group_tuple
-//        | split_by_chr
         | groupTuple()
         | merge_bams
 }
